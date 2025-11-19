@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导数找不同 - 数学挑战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 900px;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.8rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
+        
+        .score, .level, .lives {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .score-value, .level-value, .lives-value {
+            color: #4ade80;
+            font-size: 1.5rem;
+        }
+        
+        .lives-value {
+            color: #ff6b6b;
+        }
+        
+        .game-area {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .option {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.3rem;
+            border: 2px solid transparent;
+        }
+        
+        .option:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.3rem;
+            min-height: 40px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .correct {
+            background: rgba(76, 175, 80, 0.3);
+            color: #a5d6a7;
+        }
+        
+        .incorrect {
+            background: rgba(244, 67, 54, 0.3);
+            color: #ef9a9a;
+        }
+        
+        .game-over {
+            font-size: 2.5rem;
+            margin: 20px 0;
+            font-weight: bold;
+            color: #4ade80;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 25px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #ff7e5f;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .function-display {
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 1.4rem;
+        }
+        
+        .highlight {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .question {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>导数找不同</h1>
+        <p class="subtitle">找出导数不同的函数</p>
+        
+        <div class="game-info">
+            <div class="score">得分: <span class="score-value" id="score">0</span>/10</div>
+            <div class="level">难度: <span class="level-value" id="level">1</span></div>
+            <div class="lives">生命: <span class="lives-value" id="lives">3</span></div>
+        </div>
+        
+        <div class="game-area">
+            <div class="question" id="question">
+                点击选项开始游戏
+            </div>
+            
+            <div class="options" id="options">
+                <!-- 选项将通过JavaScript动态生成 -->
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            
+            <div class="game-over" id="game-over"></div>
+            
+            <div class="controls">
+                <button id="hint-btn">提示 (3)</button>
+                <button id="restart-btn" style="display: none;">重新开始</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>游戏说明:</h3>
+            <ul>
+                <li>在给出的函数中，有一个函数的<span class="highlight">导数与其他不同</span>，请找出它</li>
+                <li>正确选择得1分，错误选择扣1分并减少生命值</li>
+                <li>生命值为0时游戏结束，达到10分即可获胜！</li>
+                <li>难度随分数增加：函数复杂度提高，选项数量增加</li>
+                <li>点击"提示"按钮可以排除一个错误选项（最多使用3次）</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let score = 0;
+        let level = 1;
+        let lives = 3;
+        let hints = 3;
+        let gameActive = true;
+        let currentQuestion = null;
+        
+        // DOM元素
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const livesElement = document.getElementById('lives');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options');
+        const feedbackElement = document.getElementById('feedback');
+        const gameOverElement = document.getElementById('game-over');
+        const restartButton = document.getElementById('restart-btn');
+        const hintButton = document.getElementById('hint-btn');
+        
+        // 函数生成器 - 修复了函数重复问题
+        const functionGenerators = [
+            // 线性函数
+            () => {
+                const a = getRandomInt(1, 5);
+                const b = getRandomInt(-5, 5);
+                return {
+                    func: `${a}x + ${b}`,
+                    derivative: `${a}`
+                };
+            },
+            // 二次函数
+            () => {
+                const a = getRandomInt(1, 3);
+                const b = getRandomInt(-3, 3);
+                const c = getRandomInt(-5, 5);
+                return {
+                    func: `${a}x² + ${b}x + ${c}`,
+                    derivative: `${2*a}x + ${b}`
+                };
+            },
+            // 三次函数
+            () => {
+                const a = getRandomInt(1, 2);
+                const b = getRandomInt(-2, 2);
+                const c = getRandomInt(-3, 3);
+                const d = getRandomInt(-5, 5);
+                return {
+                    func: `${a}x³ + ${b}x² + ${c}x + ${d}`,
+                    derivative: `${3*a}x² + ${2*b}x + ${c}`
+                };
+            },
+            // 指数函数
+            () => {
+                const a = getRandomInt(2, 4);
+                return {
+                    func: `${a}^x`,
+                    derivative: `${a}^x · ln(${a})`
+                };
+            },
+            // 对数函数
+            () => {
+                const a = getRandomInt(2, 5);
+                return {
+                    func: `log${a}(x)`,
+                    derivative: `1/(x · ln(${a}))`
+                };
+            },
+            // 三角函数
+            () => {
+                const funcs = [
+                    { func: 'sin(x)', derivative: 'cos(x)' },
+                    { func: 'cos(x)', derivative: '-sin(x)' },
+                    { func: 'tan(x)', derivative: 'sec²(x)' }
+                ];
+                return funcs[getRandomInt(0, funcs.length - 1)];
+            },
+            // 幂函数
+            () => {
+                const n = getRandomInt(2, 5);
+                const a = getRandomInt(1, 3);
+                return {
+                    func: `${a}x^${n}`,
+                    derivative: `${a * n}x^${n-1}`
+                };
+            }
+        ];
+        
+        // 获取随机整数
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // 生成游戏题目 - 修复了无限循环问题
+        function generateQuestion() {
+            // 根据难度确定选项数量
+            const optionCount = Math.min(4 + Math.floor(score / 3), 6); // 调整难度递增速度
+            
+            // 选择一个导数作为大多数函数的导数
+            const baseDerivativeIndex = getRandomInt(0, functionGenerators.length - 1);
+            const baseDerivative = functionGenerators[baseDerivativeIndex]().derivative;
+            
+            // 生成函数列表
+            const functions = [];
+            const usedFunctions = new Set();
+            
+            // 添加大多数相同导数的函数
+            for (let i = 0; i < optionCount - 1; i++) {
+                let func;
+                let attempts = 0;
+                
+                // 防止无限循环
+                do {
+                    func = functionGenerators[baseDerivativeIndex]();
+                    attempts++;
+                    if (attempts > 20) break; // 安全机制
+                } while (usedFunctions.has(func.func));
+                
+                usedFunctions.add(func.func);
+                functions.push({
+                    func: func.func,
+                    derivative: baseDerivative,
+                    isDifferent: false
+                });
+            }
+            
+            // 添加一个导数不同的函数
+            let differentFunction;
+            let attempts = 0;
+            
+            do {
+                const differentIndex = getRandomInt(0, functionGenerators.length - 1);
+                differentFunction = functionGenerators[differentIndex]();
+                attempts++;
+                if (attempts > 20) break; // 安全机制
+            } while (usedFunctions.has(differentFunction.func) || differentFunction.derivative === baseDerivative);
+            
+            usedFunctions.add(differentFunction.func);
+            functions.push({
+                func: differentFunction.func,
+                derivative: differentFunction.derivative,
+                isDifferent: true
+            });
+            
+            // 随机排序函数
+            shuffleArray(functions);
+            
+            return {
+                functions: functions,
+                correctIndex: functions.findIndex(f => f.isDifferent)
+            };
+        }
+        
+        // 数组随机排序
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // 显示题目
+        function displayQuestion(question) {
+            currentQuestion = question;
+            
+            questionElement.innerHTML = "找出<span class='highlight'>导数不同</span>的函数:";
+            
+            optionsContainer.innerHTML = '';
+            
+            question.functions.forEach((func, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.innerHTML = `f(x) = ${func.func}`;
+                optionElement.dataset.index = index;
+                
+                optionElement.addEventListener('click', () => {
+                    if (gameActive) {
+                        checkAnswer(parseInt(optionElement.dataset.index), question.correctIndex);
+                    }
+                });
+                
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+        
+        // 检查答案
+        function checkAnswer(selectedIndex, correctIndex) {
+            const options = document.querySelectorAll('.option');
+            
+            if (selectedIndex === correctIndex) {
+                // 正确答案
+                score++;
+                scoreElement.textContent = score;
+                feedbackElement.textContent = "正确！这个函数的导数与其他不同。";
+                feedbackElement.className = "feedback correct";
+                
+                options[selectedIndex].style.background = "linear-gradient(to right, rgba(76, 175, 80, 0.7), rgba(56, 142, 60, 0.7))";
+            } else {
+                // 错误答案
+                score = Math.max(0, score - 1);
+                lives--;
+                scoreElement.textContent = score;
+                livesElement.textContent = lives;
+                feedbackElement.textContent = `错误！正确答案是: f(x) = ${currentQuestion.functions[correctIndex].func}`;
+                feedbackElement.className = "feedback incorrect";
+                
+                options[selectedIndex].style.background = "linear-gradient(to right, rgba(244, 67, 54, 0.7), rgba(198, 40, 40, 0.7))";
+                options[correctIndex].style.background = "linear-gradient(to right, rgba(76, 175, 80, 0.7), rgba(56, 142, 60, 0.7))";
+            }
+            
+            // 更新难度级别
+            level = Math.floor(score / 3) + 1;
+            levelElement.textContent = level;
+            
+            // 禁用所有选项
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+            
+            // 检查游戏是否结束
+            if (score >= 10) {
+                gameActive = false;
+                gameOverElement.textContent = "恭喜！你赢了！";
+                restartButton.style.display = 'inline-block';
+            } else if (lives <= 0) {
+                gameActive = false;
+                gameOverElement.textContent = "游戏结束！你的生命值已耗尽。";
+                restartButton.style.display = 'inline-block';
+            } else {
+                // 1.5秒后生成新题目
+                setTimeout(() => {
+                    if (gameActive) {
+                        try {
+                            const newQuestion = generateQuestion();
+                            displayQuestion(newQuestion);
+                            feedbackElement.textContent = '';
+                        } catch (error) {
+                            console.error("生成题目错误:", error);
+                            feedbackElement.textContent = "游戏出现错误，请重新开始";
+                            restartButton.style.display = 'inline-block';
+                            gameActive = false;
+                        }
+                    }
+                }, 1500);
+            }
+        }
+        
+        // 提示功能
+        function useHint() {
+            if (hints <= 0 || !gameActive || !currentQuestion) return;
+            
+            hints--;
+            hintButton.textContent = `提示 (${hints})`;
+            
+            const options = document.querySelectorAll('.option');
+            const wrongOptions = Array.from(options).filter((option, index) => 
+                index !== currentQuestion.correctIndex
+            );
+            
+            if (wrongOptions.length > 0) {
+                const randomWrongOption = wrongOptions[getRandomInt(0, wrongOptions.length - 1)];
+                randomWrongOption.style.opacity = '0.4';
+                randomWrongOption.style.pointerEvents = 'none';
+            }
+            
+            if (hints <= 0) {
+                hintButton.disabled = true;
+                hintButton.style.opacity = '0.5';
+            }
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            score = 0;
+            level = 1;
+            lives = 3;
+            hints = 3;
+            gameActive = true;
+            
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            livesElement.textContent = lives;
+            gameOverElement.textContent = '';
+            feedbackElement.textContent = '';
+            restartButton.style.display = 'none';
+            hintButton.textContent = `提示 (${hints})`;
+            hintButton.disabled = false;
+            hintButton.style.opacity = '1';
+            
+            try {
+                const newQuestion = generateQuestion();
+                displayQuestion(newQuestion);
+            } catch (error) {
+                console.error("游戏初始化错误:", error);
+                feedbackElement.textContent = "游戏初始化失败，请刷新页面";
+            }
+        }
+        
+        // 初始化游戏
+        hintButton.addEventListener('click', useHint);
+        restartButton.addEventListener('click', restartGame);
+        
+        // 开始游戏
+        restartGame();
+    </script>
+</body>
+</html>
