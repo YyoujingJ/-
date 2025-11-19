@@ -1,0 +1,164 @@
+name: Jekyll site CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the site in the jekyll/builder container
+      run: |
+        docker run \
+        -v ${{ github.workspace }}:/srv/jekyll -v ${{ github.workspace }}/_site:/srv/jekyll/_site \
+        jekyll/builder:latest /bin/bash -c "chmod -R 777 /srv/jekyll && jekyll build --future"
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导数找不同 - 在线数学游戏</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); color: white; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 90%; max-width: 900px; text-align: center; }
+        h1 { margin-bottom: 10px; font-size: 2.8rem; background: linear-gradient(to right, #ff7e5f, #feb47b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .game-info { display: flex; justify-content: space-between; margin-bottom: 25px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; }
+        .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .option { background: rgba(255,255,255,0.2); padding: 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; font-size: 1.3rem; }
+        .option:hover { background: rgba(255,255,255,0.3); transform: translateY(-5px); }
+        button { background: linear-gradient(to right, #ff7e5f, #feb47b); color: white; border: none; padding: 12px 25px; border-radius: 50px; font-size: 1.1rem; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 导数找不同</h1>
+        <p>在线数学挑战 - 找出导数不同的函数</p>
+        
+        <div class="game-info">
+            <div>得分: <span id="score">0</span>/10</div>
+            <div>难度: <span id="level">1</span></div>
+            <div>生命: <span id="lives">3</span></div>
+        </div>
+        
+        <div class="game-area">
+            <div class="question" id="question">点击选项开始游戏</div>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="game-over" id="game-over"></div>
+            <button id="hint-btn">💡 提示 (3)</button>
+            <button id="restart-btn" style="display:none;">🔄 重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0, level = 1, lives = 3, hints = 3, gameActive = true;
+        const functionGenerators = [
+            () => { const a = Math.floor(Math.random()*5)+1, b = Math.floor(Math.random()*11)-5; return {func: `${a}x + ${b}`, derivative: `${a}`}; },
+            () => { const a = Math.floor(Math.random()*3)+1, b = Math.floor(Math.random()*7)-3, c = Math.floor(Math.random()*11)-5; return {func: `${a}x² + ${b}x + ${c}`, derivative: `${2*a}x + ${b}`}; },
+            () => { const a = Math.floor(Math.random()*2)+1, b = Math.floor(Math.random()*5)-2, c = Math.floor(Math.random()*7)-3, d = Math.floor(Math.random()*11)-5; return {func: `${a}x³ + ${b}x² + ${c}x + ${d}`, derivative: `${3*a}x² + ${2*b}x + ${c}`}; }
+        ];
+        
+        function generateQuestion() {
+            const optionCount = Math.min(4 + Math.floor(score/3), 6);
+            const baseIndex = Math.floor(Math.random()*functionGenerators.length);
+            const baseDerivative = functionGenerators[baseIndex]().derivative;
+            const functions = [];
+            const usedFuncs = new Set();
+            
+            for(let i=0; i<optionCount-1; i++) {
+                let func; do { func = functionGenerators[baseIndex](); } while(usedFuncs.has(func.func));
+                usedFuncs.add(func.func); functions.push({...func, isDifferent: false});
+            }
+            
+            let diffFunc; do {
+                const diffIndex = Math.floor(Math.random()*functionGenerators.length);
+                diffFunc = functionGenerators[diffIndex]();
+            } while(usedFuncs.has(diffFunc.func) || diffFunc.derivative === baseDerivative);
+            
+            functions.push({...diffFunc, isDifferent: true});
+            functions.sort(() => Math.random()-0.5);
+            return {functions, correctIndex: functions.findIndex(f=>f.isDifferent)};
+        }
+        
+        function displayQuestion(question) {
+            document.getElementById('question').innerHTML = "找出<span style='color:#ffeb3b'>导数不同</span>的函数:";
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            question.functions.forEach((func, index) => {
+                const option = document.createElement('div');
+                option.className = 'option';
+                option.innerHTML = `f(x) = ${func.func}`;
+                option.onclick = () => gameActive && checkAnswer(index, question.correctIndex);
+                optionsContainer.appendChild(option);
+            });
+        }
+        
+        function checkAnswer(selected, correct) {
+            const options = document.querySelectorAll('.option');
+            if(selected === correct) {
+                score++; document.getElementById('score').textContent = score;
+                document.getElementById('feedback').textContent = "✅ 正确！";
+                options[selected].style.background = "linear-gradient(to right, rgba(76,175,80,0.7), rgba(56,142,60,0.7))";
+            } else {
+                score = Math.max(0,score-1); lives--;
+                document.getElementById('score').textContent = score;
+                document.getElementById('lives').textContent = lives;
+                document.getElementById('feedback').textContent = "❌ 错误！";
+                options[selected].style.background = "linear-gradient(to right, rgba(244,67,54,0.7), rgba(198,40,40,0.7))";
+                options[correct].style.background = "linear-gradient(to right, rgba(76,175,80,0.7), rgba(56,142,60,0.7))";
+            }
+            
+            document.getElementById('level').textContent = Math.floor(score/3)+1;
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            
+            if(score>=10) endGame("🎉 恭喜！你赢了！");
+            else if(lives<=0) endGame("💀 游戏结束！");
+            else setTimeout(() => { if(gameActive) { displayQuestion(generateQuestion()); document.getElementById('feedback').textContent = ''; } }, 1500);
+        }
+        
+        function endGame(msg) {
+            gameActive = false;
+            document.getElementById('game-over').textContent = msg;
+            document.getElementById('restart-btn').style.display = 'inline-block';
+        }
+        
+        document.getElementById('restart-btn').onclick = () => {
+            score=0; level=1; lives=3; hints=3; gameActive=true;
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('game-over').textContent = '';
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('restart-btn').style.display = 'none';
+            displayQuestion(generateQuestion());
+        };
+        
+        document.getElementById('hint-btn').onclick = function() {
+            if(hints<=0 || !gameActive || !currentQuestion) return;
+            hints--; this.textContent = `💡 提示 (${hints})`;
+            const options = document.querySelectorAll('.option');
+            const wrongOptions = [...options].filter((_,i) => i !== currentQuestion.correctIndex);
+            if(wrongOptions.length) {
+                const randomWrong = wrongOptions[Math.floor(Math.random()*wrongOptions.length)];
+                randomWrong.style.opacity = '0.4';
+                randomWrong.style.pointerEvents = 'none';
+            }
+            if(hints<=0) { this.disabled=true; this.style.opacity='0.5'; }
+        };
+        
+        let currentQuestion;
+        function initGame() {
+            currentQuestion = generateQuestion();
+            displayQuestion(currentQuestion);
+        }
+        initGame();
+    </script>
+</body>
+</html>
